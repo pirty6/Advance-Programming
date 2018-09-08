@@ -30,7 +30,6 @@ int main(int argc, char *argv[]) {
   float num;
   float max = 0.0, min = 0.0;
   int count = 0;
-  int aux = 0;
 
 
   if((dir = opendir(argv[1])) == NULL || (dir2 = opendir(argv[2])) == NULL ) {
@@ -60,12 +59,11 @@ int main(int argc, char *argv[]) {
           if(values[i][j] < min) {
             min = values[i][j];
           }
-          aux++;
     		}
         j++;
         count = j;
     	 }
-       printf("\n%f", max);
+       // printf("\n%f", max);
        // printf("\n%f\n", min);
        sprintf(filenameout, "%s/%s", argv[2], direntry->d_name);
        fd_out = fopen(filenameout, "w");
@@ -76,7 +74,11 @@ int main(int argc, char *argv[]) {
        for(j = 0; j < count; j++) {
          for(i = 0; i < size; i++) {
            values[i][j] = ((values[i][j]-min)/(max-min));
-           fprintf(fd_out, "%f,",values[i][j]);
+           if(i == size-1 && j == count-1) {
+             fprintf(fd_out, "%f",values[i][j]);
+           } else {
+             fprintf(fd_out, "%f,",values[i][j]);
+           }
            // printf("%f ", values[i][j]);
          }
        }
@@ -90,5 +92,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+  printf("Done\n");
   return 0;
 }
