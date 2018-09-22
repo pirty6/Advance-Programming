@@ -14,9 +14,6 @@
 #include <ctype.h>
 
 void changeName(char* name, char* directory, char* program) {
-  FILE *fd_out;
-  FILE *fd_in;
-  char ch;
   char filename[PATH_MAX + NAME_MAX + 1];
   char filenameoriginal[PATH_MAX + NAME_MAX + 1];
   sprintf(filenameoriginal, "%s/%s", directory, name);
@@ -44,17 +41,10 @@ void changeName(char* name, char* directory, char* program) {
   } else {
     sprintf(filename, "%s/%s.%i", directory, name, count);
   }
-  fd_in = fopen(filenameoriginal, "r");
-  if (fd_in == NULL) {
-    perror(program);
-    exit (-1);
-  }
-  fd_out = fopen(filename, "w");
-  while( ( ch = fgetc(fd_in) ) != EOF ) {
-    fputc(ch, fd_out);
-  }
-  fclose(fd_in);
-  fclose(fd_out);
+  rename(filenameoriginal, filename);
+  FILE *f;
+  f = fopen(filenameoriginal, "w");
+  fclose(f);
 }
 
 void sleepTime(int secs) {
@@ -84,6 +74,7 @@ void findlog(char* name, char* directory, char* program, int secs, int count) {
         }
       }
     }
+    closedir(dir);
     count--;
   }
 }
