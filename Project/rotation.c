@@ -1,3 +1,16 @@
+/*----------------------------------------------------------------
+
+*
+
+* Programación avanzada: Problema del barbero.
+
+* Fecha: 23-Sep-2015
+
+* Autor: A1206747 Mariana Perez
+
+*
+
+*--------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,69 +26,36 @@
 #include <errno.h>
 #include <ctype.h>
 
-void changeName(char* name, char* directory, char* program) {
-  char filename[PATH_MAX + NAME_MAX + 1];
-  char filenameoriginal[PATH_MAX + NAME_MAX + 1];
-  sprintf(filenameoriginal, "%s/%s", directory, name);
-  char* extension = NULL;
-  memset(filename, 0, sizeof(filename));
-  extension = strrchr(name, '.');
-  char* ex;
-  int i, count = 1, flag = 0;
-  int extensionsize = strlen(extension);
-  for(i = 1; i < extensionsize; i++) {
-    if(!isdigit(extension[i])) {
-      flag = 1;
-    }
-  }
-  if(flag == 0) {
-    memmove(&extension[0], &extension[1], strlen(extension) - 0);
-    count = atoi(extension);
-    count++;
-  }
-  if (extension != NULL) {
-    *extension = '\0';
-  }
-  if(directory[0] == '.') {
-    sprintf(filename, "%s%s.%i", directory, name, count);
-  } else {
-    sprintf(filename, "%s/%s.%i", directory, name, count);
-  }
-  rename(filenameoriginal, filename);
-  FILE *f;
-  f = fopen(filenameoriginal, "w");
-  fclose(f);
-}
-
-void sleepTime(int secs) {
-  int retTime = time(0) + secs;
-  while (time(0) < retTime);
-}
-
 void findlog(char* name, char* directory, char* program, int secs, int count) {
-  DIR* dir;
-  struct dirent* direntry;
   char filename[PATH_MAX + NAME_MAX + 1];
-  char* files;
-  char* extension;
-  char* fileOrder;
-  int i = 0, j, k, flag = 0, aux, size;
-
-  while (count > 0) {
-    sleepTime(secs);
-    if ((dir = opendir(directory)) == NULL) {
-      perror(program);
-      exit(-1);
-    }
-    while ((direntry = readdir(dir)) != NULL) {
-      if(strcmp(direntry->d_name, ".") != 0 && strcmp(direntry->d_name, "..") != 0){
-        if (strstr(direntry->d_name, name)) {
-          changeName(direntry->d_name, directory, program);
-        }
+  char newfilename[PATH_MAX + NAME_MAX + 1];
+  int i = 0, aux;
+  for(i = 0; i < count; i++) {
+    sleep(secs);
+    for(aux = i; aux > 0; aux --) {
+      int number = aux;
+      char ext1[10];
+      char ext2[10];
+      if(directory[0] == '.') {
+        sprintf(filename, "%s%s.%i", directory, name, number);
+        sprintf(newfilename, "%s%s.%i", directory, name, number+1);
+      } else {
+        sprintf(filename, "%s/%s.%i", directory, name, number);
+        sprintf(newfilename, "%s/%s.%i", directory, name, number+1);
       }
+      rename(filename, newfilename);
     }
-    closedir(dir);
-    count--;
+    if(directory[0] == '.') {
+      sprintf(filename, "%s%s.log", directory, name);
+      sprintf(newfilename, "%s%s.1", directory, name);
+    } else {
+      sprintf(filename, "%s/%s.log", directory, name);
+      sprintf(newfilename, "%s/%s.1", directory, name);
+    }
+    rename(filename, newfilename);
+    FILE *f;
+    f = fopen(filename, "w");
+    fclose(f);
   }
 }
 
@@ -90,6 +70,7 @@ int main(int argc, char *argv[]) {
   char* q;
   char dir_name[NAME_MAX+1];
   char* directory;
+  char filename[PATH_MAX + NAME_MAX + 1];
   getcwd(dir_name, NAME_MAX);
   directory = dir_name;
   directory = argv[1];
@@ -102,6 +83,17 @@ int main(int argc, char *argv[]) {
   }
   if (errno != 0 || *q != '\0' || count > INT_MAX || count < 0) {
     printf("Number of files must be a positive integer number\n");
+    return -1;
+  }
+  FILE *f;
+  if(directory[0] == '.') {
+    sprintf(filename, "%s%s.log", directory, argv[2]);
+  } else {
+    sprintf(filename, "%s/%s.log", directory, argv[2]);
+  }
+  f = fopen(filename, "r");
+  if(f == NULL) {
+    perror(argv[0]);
     return -1;
   }
   findlog(argv[2], directory, argv[0], secs, count);
