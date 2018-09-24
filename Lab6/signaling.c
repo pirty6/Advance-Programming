@@ -1,3 +1,16 @@
+/*----------------------------------------------------------------
+
+*
+
+* Programación avanzada: Manejando señales
+
+* Fecha: 23-Sep-2015
+
+* Autor: A1206747 Mariana Perez
+
+*
+
+*--------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,12 +26,31 @@
 
 int number = 10;
 int counter = 0;
+int flag = 0;
 
-void handler1(int signal) {
-  counter++;
+void handler(int signal) {
+  switch(signal) {
+    case SIGUSR2 :
+      if (flag == 0) {
+        counter++;
+        printf("SIGUSR2 - cont = %i - n = %i\n", counter, number);
+      }
+      break;
+    case SIGUSR1 :
+      if(flag == 0) {
+        flag = 1;
+        printf("SIGUSR1 - SIGUSR2 is now ignored\n");
+      } else {
+        printf("SIGUSR1 - SIGUSR2 is now accepted\n");
+        flag = 0;
+      }
+      break;
+  }
 }
 
 int main(int argc, char* argv[]) {
+
+
   if(argc > 2) {
     printf("Usage: %s [n]\n", argv[0]);
     return -1;
@@ -31,12 +63,13 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  signal(SIGUSR1, handler);
+  signal(SIGUSR2, handler);
+
   while(counter < number) {
-    int pid = strtol(argv[1], NULL, 10);
-    kill(pid, SIGUSR1);
-    signal(SIGUSR1, handler1);
+    sleep(30);
   }
-  signal(SIGUSR2, handler2);
+  printf("Exiting...\n");
 
   return 0;
 }
