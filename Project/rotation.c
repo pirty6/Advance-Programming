@@ -26,11 +26,18 @@
 #include <errno.h>
 #include <ctype.h>
 
+
 void findlog(char* name, char* directory, char* program, int secs, int count) {
   char filename[PATH_MAX + NAME_MAX + 1];
   char newfilename[PATH_MAX + NAME_MAX + 1];
+  char lastfilename[PATH_MAX + NAME_MAX + 1];
+  if(directory[0] == '.') {
+    sprintf(lastfilename, "%s%s.%i", directory, name, count+1);
+  } else {
+    sprintf(lastfilename, "%s/%s.%i", directory, name, count+1);
+  }
   int i = 0, aux;
-  for(i = 0; i < count; i++) {
+  for(i = 0; i < count+1; i++) {
     sleep(secs);
     for(aux = i; aux > 0; aux --) {
       int number = aux;
@@ -57,6 +64,7 @@ void findlog(char* name, char* directory, char* program, int secs, int count) {
     f = fopen(filename, "w");
     fclose(f);
   }
+  remove(lastfilename);
 }
 
 
