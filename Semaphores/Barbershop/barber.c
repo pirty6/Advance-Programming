@@ -1,7 +1,7 @@
 #include "header.h"
 #include <time.h>
 
-void a_barber(char* program) {
+void a_barber(char* program, int amount) {
   int semid, i, k;
   key_t key;
 
@@ -16,13 +16,21 @@ void a_barber(char* program) {
   }
 
   while(1) {
-    printf("The barber %i goes to sleep\n", getpid());
+    int y = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
+    if(y < 1) {
+      printf("The barber %i is sleeping\n", getpid());
+    }
     mutex_wait(semid, CUSTOMER);
     mutex_signal(semid, BARBER);
     printf("The barber %i is cutting the hair\n", getpid());
-    mutex_signal(semid, CUSTOMERDONE);
+    sleep(3);
+    printf("The barber has finished cutting hair.\n");
+    mutex_wait(semid, CUSTOMERDONE);
     mutex_signal(semid, BARBERDONE);
-    sleep(2);
+    y = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
+    if(y < 1){
+      printf("The barber goes to sleep\n");
+    }
   }
 }
 
@@ -31,11 +39,17 @@ int main(int argc, char* argv[]) {
   int amount = 0;
   key_t key;
 
-  if(argc != 1) {
-    printf("usage: %s\n", argv[0]);
+  if(argc != 2) {
+    printf("usage: %s chairs\n", argv[0]);
     return -1;
   }
 
-  a_barber(argv[0]);
+  amount = atoi(argv[1]);
+  if(amount < 1) {
+    printf("Chairs must be a positive integer number\n");
+    return -1;
+  }
+
+  a_barber(argv[0], amount);
   return 0;
 }

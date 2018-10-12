@@ -44,13 +44,20 @@ void a_elves(char* program) {
 }
 
 int main(int argc, char* argv[]) {
-
+  int semid, i, pid, customers = 0;
   if(argc != 1) {
     printf("usage: %s\n", argv[0]);
     return -1;
   }
-
-  a_elves(argv[0]);
+  for(i = 0; i < 3; i++) {
+    if((pid = fork()) < 0) {
+      perror("fork");
+      return -1;
+    } else if (pid == 0) {
+      a_elves(argv[0]);
+    } else {
+    }
+  }
 
   return 0;
 }

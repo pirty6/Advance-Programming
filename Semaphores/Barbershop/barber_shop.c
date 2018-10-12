@@ -6,13 +6,13 @@ int main(int argc, char* argv[]) {
   key_t key;
 
   if(argc != 2) {
-    printf("Usage: %s size\n", argv[0]);
+    printf("Usage: %s chairs\n", argv[0]);
     return -1;
   }
 
   size = atoi(argv[1]);
   if(size < 1) {
-    printf("%s: The size must be a positive number\n", argv[0]);
+    printf("%s: The chairs must be a positive number\n", argv[0]);
     return -1;
   }
 
