@@ -19,7 +19,7 @@ void a_elves(char* program) {
     mutex_wait(semid, ELFTEX);
     mutex_wait(semid, MUTEX);
     sem_signal(semid, ELVES, 1);
-    printf("An elf has arrived\n");
+    printf("The elf %i has arrived\n", getpid());
     int elves = semctl(semid, ELVES, GETVAL, 0);
     if(elves == 3) {
       printf("There are 3 elves\n");
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     printf("usage: %s\n", argv[0]);
     return -1;
   }
-  for(i = 0; i < 3; i++) {
+  for(i = 0; i < 9; i++) {
     if((pid = fork()) < 0) {
       perror("fork");
       return -1;

@@ -1,3 +1,16 @@
+/*----------------------------------------------------------------
+
+*
+
+* Programación avanzada: Problema del barbero.
+
+* Fecha: 11-Oct-2018
+
+* Autor: A01206747 Mariana Perez Garcia
+
+*
+
+*--------------------------------------------------------------*/
 #include "header.h"
 
 int main(int argc, char* argv[]) {

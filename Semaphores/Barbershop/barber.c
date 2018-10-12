@@ -1,3 +1,16 @@
+/*----------------------------------------------------------------
+
+*
+
+* Programación avanzada: Problema del barbero.
+
+* Fecha: 11-Oct-2018
+
+* Autor: A01206747 Mariana Perez Garcia
+
+*
+
+*--------------------------------------------------------------*/
 #include "header.h"
 #include <time.h>
 
@@ -17,7 +30,7 @@ void a_barber(char* program, int amount) {
 
   while(1) {
     int y = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
-    if(y < 1) {
+    if(y == 0) {
       printf("The barber %i is sleeping\n", getpid());
     }
     mutex_wait(semid, CUSTOMER);
@@ -28,7 +41,7 @@ void a_barber(char* program, int amount) {
     mutex_wait(semid, CUSTOMERDONE);
     mutex_signal(semid, BARBERDONE);
     y = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
-    if(y < 1){
+    if(y == 0){
       printf("The barber goes to sleep\n");
     }
   }

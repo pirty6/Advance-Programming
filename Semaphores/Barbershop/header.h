@@ -1,3 +1,16 @@
+/*----------------------------------------------------------------
+
+*
+
+* Programación avanzada: Problema del barbero.
+
+* Fecha: 11-Oct-2018
+
+* Autor: A01206747 Mariana Perez Garcia
+
+*
+
+*--------------------------------------------------------------*/
 #ifndef SEMAFOROS_H
 #define SEMAFOROS_H
 
