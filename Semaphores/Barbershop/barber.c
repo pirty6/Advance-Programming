@@ -29,20 +29,16 @@ void a_barber(char* program, int amount) {
   }
 
   while(1) {
-    int y = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
-    if(y == 0) {
-      printf("The barber %i is sleeping\n", getpid());
-    }
     mutex_wait(semid, CUSTOMER);
     mutex_signal(semid, BARBER);
     printf("The barber %i is cutting the hair\n", getpid());
     sleep(3);
-    printf("The barber has finished cutting hair.\n");
+    printf("The barber %i has finished cutting hair.\n" getpid());
     mutex_wait(semid, CUSTOMERDONE);
     mutex_signal(semid, BARBERDONE);
     y = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
     if(y == 0){
-      printf("The barber goes to sleep\n");
+      printf("The barber %i goes to sleep\n" getpid());
     }
   }
 }
