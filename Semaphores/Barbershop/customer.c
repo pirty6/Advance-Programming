@@ -48,6 +48,10 @@ void a_customer(char* program, int timeReturn) {
       printf("Customer %i leaving barber shop.\n", getpid());
     }
     sem_wait(semid, CURRENTCUSTOMERS, 1);
+    int k = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
+    if(k == 0) {
+      printf("The barber is sleeping\n");
+    }
     mutex_signal(semid, MUTEX);
     sleep(timeReturn);
   }
