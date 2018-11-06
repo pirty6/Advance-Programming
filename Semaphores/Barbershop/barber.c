@@ -41,9 +41,6 @@ void a_barber(char* program, int amount) {
     mutex_wait(semid, CUSTOMERDONE);
     mutex_signal(semid, BARBERDONE);
     int x = semctl(semid, CURRENTCUSTOMERS, GETVAL, 0);
-    if(x == 0){
-      printf("The barber %i is sleeping\n", getpid());
-    }
   }
 }
 
