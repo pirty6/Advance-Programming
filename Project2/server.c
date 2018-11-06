@@ -2,6 +2,22 @@
 #include <string.h>
 #include <dirent.h>
 
+void writeFile(char* filename, char* text) {
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	FILE *fp;
+	if(access(filename, F_OK ) != -1 ) {
+		fp = fopen(filename, "a");
+	} else {
+		fp = fopen(filename, "w+");
+	}
+	fseek(fp, 0, SEEK_END);
+	fprintf(fp, "%d-%d-%d %d:%d:%d IP: %s\n",tm.tm_year + 1900, tm.tm_mon + 1,
+	tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, text);
+	fflush(fp);
+	fclose(fp);
+}
+
 char* concat(char* s1, char* s2) {
 	char* result = malloc(strlen(s1)+strlen(s2)+1);
 	strcpy(result, s1);
@@ -9,7 +25,15 @@ char* concat(char* s1, char* s2) {
 	return result;
 }
 
-void serves_client(int nsfd, char* directory) {
+void serves_client(int nsfd, char* directory, char* ip) {
+
+	char* data_log= "";
+	char log_filename[PATH_MAX + NAME_MAX + 1];
+	sprintf(log_filename, "%s/log.txt", directory);
+	data_log = concat(ip, " Ha iniciado una conexion");
+	//MUTEX
+	writeFile(log_filename, data_log);
+	//MUTEX
 	char* data = "Hola";
 	char* data_sent;
 	char filename[PATH_MAX + NAME_MAX + 1];
@@ -21,6 +45,7 @@ void serves_client(int nsfd, char* directory) {
 	srand(getpid());
 	do {
 			data = "";
+			data_log = "";
 			read(nsfd, &number_sent, sizeof(number_sent));
 			// printf("EL SERVIDOR ESTA RECIBIENDO: %i\n", number_sent);
 			read(nsfd, &length_sent, sizeof(length_sent));
@@ -32,6 +57,14 @@ void serves_client(int nsfd, char* directory) {
 
 			if(number_sent == SEND) {
 				if(data_sent[0] != '/') {
+					//MUTEX WAIT
+					data_log = concat(ip, " Comando: 101 Parametro: ");
+					data_log = concat(data_log, data_sent);
+					writeFile(log_filename, data_log);
+					data_log = "";
+					data_log = concat(ip, " Respuesta: 203 Parametro: Error interno");
+					writeFile(log_filename, data_log);
+					//MUTEX SIGNAL
 					answer = ERROR;
 					data = "Error interno";
 				} else {
@@ -39,6 +72,14 @@ void serves_client(int nsfd, char* directory) {
 					printf("%s\n", filename);
 					lstat(filename, &info);
 					if(S_ISDIR(info.st_mode)) {
+						//MUTEX
+						data_log = concat(ip, " Comando: 101 Parametro: ");
+						data_log = concat(data_log, data_sent);
+						writeFile(log_filename, data_log);
+						data_log = "";
+						data_log = concat(ip, " Respuesta: 205 Parametro: La ruta es un directorio");
+						writeFile(log_filename, data_log);
+						//MUTEX
 						answer = DIRECTORY;
 						data = "La ruta es un directorio";
 					} else {
@@ -54,34 +95,80 @@ void serves_client(int nsfd, char* directory) {
 								while((nbytes = read(fd_in, &buffer, sizeof(buffer))) != 0) {
 									write(fd_out, &buffer, nbytes);
 								}
+								//MUTEX
+								data_log = concat(ip, " Comando: 101 Parametro: ");
+								data_log = concat(data_log, data_sent);
+								writeFile(log_filename, data_log);
+								data_log = "";
+								data_log = concat(ip, " Respuesta: 301 Parametro: Enviando archivo");
+								writeFile(log_filename, data_log);
+								//MUTEX
 								answer = SENDFILE;
 								data = "Enviando archivo";
 								close(fd_in);
 								close(fd_out);
 							} else {
+								//MUTEX
+								data_log = concat(ip, " Comando: 101 Parametro: ");
+								data_log = concat(data_log, data_sent);
+								writeFile(log_filename, data_log);
+								data_log = "";
+								data_log = concat(ip, " Respuesta: 201 Parametro: Permiso denegado");
+								writeFile(log_filename, data_log);
+								//MUTEX
 								answer = DENIED;
 								data = "Permiso denegado";
 							}
 						} else {
+							//MUTEX
+							data_log = concat(ip, " Comando: 101 Parametro: ");
+							data_log = concat(data_log, data_sent);
+							writeFile(log_filename, data_log);
+							data_log = "";
+							data_log = concat(ip, " Respuesta: 202 Parametro: Archivo no encontrado");
+							writeFile(log_filename, data_log);
+							//MUTEX
 							answer = NOTFOUND;
 							data = "Archivo no encontrado";
-							// printf("FILE DOESNT EXIST\n");
 						}
 					}
 				}
 			} else if (number_sent == LS) {
 				if(data_sent[0] != '/') {
+					//MUTEX
+					data_log = concat(ip, " Comando: 102 Parametro: ");
+					data_log = concat(data_log, data_sent);
+					writeFile(log_filename, data_log);
+					data_log = "";
+					data_log = concat(ip, " Respuesta: 203 Parametro: Error interno");
+					writeFile(log_filename, data_log);
+					//MUTEX
 					answer = ERROR;
 					data = "Error interno";
 				} else {
 					sprintf(filename, "%s%s", directory, data_sent);
 					if(lstat(filename, &info) != 0) {
+						//MUTEX
+						data_log = concat(ip, " Comando: 102 Parametro: ");
+						data_log = concat(data_log, data_sent);
+						writeFile(log_filename, data_log);
+						data_log = "";
+						data_log = concat(ip, " Respuesta: 206 Parametro: Directorio no encontrado");
+						writeFile(log_filename, data_log);
+						//MUTEX
 						answer = DIRNOTFOUND;
-						data = "Directory not found";
+						data = "Directorio no encontrado";
 					} else {
-						// printf("IT EXISTS\n");
 						DIR* dir;
 						if((dir = opendir(filename)) == NULL) {
+							//MUTEX
+							data_log = concat(ip, " Comando: 102 Parametro: ");
+							data_log = concat(data_log, data_sent);
+							writeFile(log_filename, data_log);
+							data_log = "";
+							data_log = concat(ip, " Respuesta: 207 Parametro: La ruta no es un directorio");
+							writeFile(log_filename, data_log);
+							//MUTEX
 							answer = NOTDIR;
 							data = "La ruta no es un directorio";
 						} else {
@@ -90,19 +177,41 @@ void serves_client(int nsfd, char* directory) {
 							while((direntry = readdir(dir)) != NULL) {
 								if(strcmp(direntry->d_name, ".") != 0 &&
 								strcmp(direntry->d_name, "..") != 0) {
-									// printf("%s\n", direntry->d_name);
 									data = concat(data, direntry->d_name);
 									data = concat(data, "\n");
-									// strcpy(data, "\n");
 								}
 							}
+							//MUTEX
+							data_log = concat(ip, " Comando: 102 Parametro: ");
+							data_log = concat(data_log, data_sent);
+							writeFile(log_filename, data_log);
+							data_log = "";
+							data_log = concat(ip, " Respuesta: 302 Parametro: Enviando el contenido de un directorio: \n");
+							data_log = concat(data_log, data);
+							writeFile(log_filename, data_log);
+							//MUTEX
 						}
 						closedir(dir);
 					}
 				}
 			} else {
-				answer = UNKNOWN;
-				data = "Comando no conocido";
+				if(number_sent == END){
+					//MUTEX
+					data_log = concat(ip, " Ha terminado la conexion");
+					writeFile(log_filename, data_log);
+					//MUTEX
+				} else {
+					//MUTEX
+					data_log = concat(ip, " Comando: 102 Parametro: ");
+					data_log = concat(data_log, data_sent);
+					writeFile(log_filename, data_log);
+					data_log = "";
+					data_log = concat(ip, " Respuesta: 204 Parametro: Comando no conocido");
+					writeFile(log_filename, data_log);
+					//MUTEX
+					answer = UNKNOWN;
+					data = "Comando no conocido";
+				}
 			}
 			length = strlen(data);
 			write(nsfd, &answer, sizeof(answer));
@@ -142,7 +251,7 @@ void server(char* ip, int port, char* directory, char* program) {
 			perror(program);
 		} else if (pid == 0) {
 			close(sfd);
-			serves_client(nsfd, directory);
+			serves_client(nsfd, directory, ip);
 			exit(0);
 		} else {
 			close(nsfd);
