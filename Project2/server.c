@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 	int port = atoi(argv[2]);
-	if(port < 500) {
+	if(port < 5000) {
 		printf("%s The port must be grater than 5000\n", argv[0]);
 		return -1;
 	}
