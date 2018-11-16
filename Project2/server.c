@@ -83,21 +83,32 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 				} else {
 					sprintf(filename, "%s%s", directory, data_sent);
 					printf("%s\n", filename);
-					lstat(filename, &info);
-					if(S_ISDIR(info.st_mode)) {
+					int s = lstat(filename, &info);
+					if( s < 0) {
 						mutex_wait(semid, MUTEX);
 						data_log = concat(ip, " Comando: 101 Parametro: ");
 						data_log = concat(data_log, data_sent);
 						writeFile(log_filename, data_log);
 						data_log = "";
-						data_log = concat(ip, " Respuesta: 205 Parametro: La ruta es un directorio");
+						data_log = concat(ip, " Respuesta: 202 Parametro: Archivo no encontrado");
 						writeFile(log_filename, data_log);
 						mutex_signal(semid, MUTEX);
-						answer = DIRECTORY;
-						data = "La ruta es un directorio";
+						answer = NOTFOUND;
+						data = "Archivo no encontrado";
 					} else {
-						printf("%s\n", filename);
-						if(access(filename, F_OK) != -1) {
+						if(S_ISDIR(info.st_mode)) {
+							mutex_wait(semid, MUTEX);
+							data_log = concat(ip, " Comando: 101 Parametro: ");
+							data_log = concat(data_log, data_sent);
+							writeFile(log_filename, data_log);
+							data_log = "";
+							data_log = concat(ip, " Respuesta: 205 Parametro: La ruta es un directorio");
+							writeFile(log_filename, data_log);
+							mutex_signal(semid, MUTEX);
+							answer = DIRECTORY;
+							data = "La ruta es un directorio";
+						} else {
+							printf("%s\n", filename);
 							if(access(filename, R_OK) == 0) {
 								char buffer;
 								char* target_filename = data_sent + 1;
@@ -132,17 +143,6 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 								answer = DENIED;
 								data = "Permiso denegado";
 							}
-						} else {
-							mutex_wait(semid, MUTEX);
-							data_log = concat(ip, " Comando: 101 Parametro: ");
-							data_log = concat(data_log, data_sent);
-							writeFile(log_filename, data_log);
-							data_log = "";
-							data_log = concat(ip, " Respuesta: 202 Parametro: Archivo no encontrado");
-							writeFile(log_filename, data_log);
-							mutex_signal(semid, MUTEX);
-							answer = NOTFOUND;
-							data = "Archivo no encontrado";
 						}
 					}
 				}
