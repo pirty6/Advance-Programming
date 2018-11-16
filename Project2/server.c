@@ -56,6 +56,8 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 	write(nsfd, data, length * sizeof(char));
 	srand(getpid());
 	do {
+			long size = 0;
+			int flag = 0;
 			data = "";
 			data_log = "";
 			read(nsfd, &number_sent, sizeof(number_sent));
@@ -110,21 +112,13 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						} else {
 							printf("%s\n", filename);
 							if(access(filename, R_OK) == 0) {
+								flag = 1;
 								FILE *fd;
-								fd = fopen(filename, "r");
-								char *buffer = NULL;
-								size_t size = 0;
-								fseek(fd, 0, SEEK_END);
-								size = ftell(fd);
-								rewind(fd);
-								buffer = malloc((size + 1) * sizeof(*buffer));
-								fread(buffer, size, 1, fd);
-								buffer[size] = '\0';
-								printf("HEWWO\n");
-								int i;
-								for(i = 0; i < size; i++) {
-									printf("%d\n", buffer[i]);
-								}
+								fd = fopen(filename, "rb");
+								data = NULL;
+								size = info.st_size;
+								data = malloc((size + 1) * sizeof(*data));
+								fread(data, size, 1, fd);
 								mutex_wait(semid, MUTEX);
 								data_log = concat(ip, " Comando: 101 Parametro: ");
 								data_log = concat(data_log, data_sent);
@@ -134,7 +128,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 								writeFile(log_filename, data_log);
 								mutex_signal(semid, MUTEX);
 								answer = SENDFILE;
-								data = "Enviando archivo";
+								//data = "Enviando archivo";
 								fclose(fd);
 							} else {
 								mutex_wait(semid, MUTEX);
@@ -233,8 +227,13 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 			}
 			length = strlen(data);
 			write(nsfd, &answer, sizeof(answer));
-			write(nsfd, &length, sizeof(length));
-			write(nsfd, data, length * sizeof(char));
+			if(flag == 0) {
+				write(nsfd, &length, sizeof(length));
+				write(nsfd, data, length * sizeof(char));
+			} else {
+				write(nsfd, &size, sizeof(size));
+				write(nsfd, data, size * sizeof(char));
+			}
 			free(data_sent);
 			memset(filename, 0, PATH_MAX + NAME_MAX + 1);
 	} while (number_sent != END);
