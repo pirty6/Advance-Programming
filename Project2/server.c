@@ -110,14 +110,20 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						} else {
 							printf("%s\n", filename);
 							if(access(filename, R_OK) == 0) {
-								char buffer;
-								char* target_filename = data_sent + 1;
-								int fd_in, fd_out;
-								fd_in = open(filename, O_RDONLY);
-								fd_out = open(target_filename, O_WRONLY | O_TRUNC | O_CREAT, 0666);
-								ssize_t nbytes;
-								while((nbytes = read(fd_in, &buffer, sizeof(buffer))) != 0) {
-									write(fd_out, &buffer, nbytes);
+								FILE *fd;
+								fd = fopen(filename, "r");
+								char *buffer = NULL;
+								size_t size = 0;
+								fseek(fd, 0, SEEK_END);
+								size = ftell(fd);
+								rewind(fd);
+								buffer = malloc((size + 1) * sizeof(*buffer));
+								fread(buffer, size, 1, fd);
+								buffer[size] = '\0';
+								printf("HEWWO\n");
+								int i;
+								for(i = 0; i < size; i++) {
+									printf("%d\n", buffer[i]);
 								}
 								mutex_wait(semid, MUTEX);
 								data_log = concat(ip, " Comando: 101 Parametro: ");
@@ -129,8 +135,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 								mutex_signal(semid, MUTEX);
 								answer = SENDFILE;
 								data = "Enviando archivo";
-								close(fd_in);
-								close(fd_out);
+								fclose(fd);
 							} else {
 								mutex_wait(semid, MUTEX);
 								data_log = concat(ip, " Comando: 101 Parametro: ");
