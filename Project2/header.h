@@ -29,6 +29,7 @@
 #include <time.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include<pthread.h> //for threading , link with lpthread
 
 #define HELLO       1
 #define SEND		    101

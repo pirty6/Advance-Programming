@@ -1,0 +1,9 @@
+2018-11-13 11:9:47 IP: 127.0.0.1Ha iniciado una conexion
+2018-11-13 11:9:47 IP: 127.0.0.1Ha iniciado una conexion
+2018-11-13 11:9:47 IP: 127.0.0.1Ha iniciado una conexion
+2018-11-13 11:9:47 IP: 127.0.0.1Ha iniciado una conexion
+2018-11-13 11:9:47 IP: 127.0.0.1Ha iniciado una conexion
+2018-11-13 11:9:47 IP: 127.0.0.1 Valor anterior: 0 Valor actual: 0
+2018-11-13 11:9:49 IP: 127.0.0.1 Valor anterior: 0 Valor actual: 0
+2018-11-13 11:9:51 IP: 127.0.0.1 Valor anterior: 0 Valor actual: 0
+2018-11-13 11:9:51 IP: 127.0.0.1 Ha terminado la conexion

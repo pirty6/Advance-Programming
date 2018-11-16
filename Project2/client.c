@@ -57,7 +57,7 @@ int test_case_101(int sfd) {
 		return -1;
 	}
 	printf("PASSED\n");
-	
+
 	snd_msg(sfd, 101, "/imagen4_n.jpg");
 	code = rcv_msg(sfd);
 	printf("codigo recibido: %i\n", code);
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	server_info.sin_family = AF_INET;
-	server_info.sin_addr.s_addr = inet_addr(argv[1]);
+	server_info.sin_addr.s_addr = INADDR_ANY;
 	server_info.sin_port = htons(port);
 	if ( connect(sfd, (struct sockaddr *) &server_info, sizeof(server_info)) < 0 ) {
 		perror(argv[0]);

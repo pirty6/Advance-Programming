@@ -64,6 +64,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 			// printf("EL SERVIDOR ESTA RECIBIENDO LONGITUD: %li\n", length_sent);
 			data_sent = (char*) malloc(length_sent*sizeof(char));
 			data_read = read(nsfd, data_sent, length_sent * sizeof(char));
+			data_sent[length_sent] = '\0';
 			// printf("EL SERVIDOR ESTA RECIBIENDO DATOS: %s\n", data_sent);
 			struct stat info;
 
@@ -95,6 +96,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						answer = DIRECTORY;
 						data = "La ruta es un directorio";
 					} else {
+						printf("%s\n", filename);
 						if(access(filename, F_OK) != -1) {
 							if(access(filename, R_OK) == 0) {
 								char buffer;
@@ -229,6 +231,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 			write(nsfd, &length, sizeof(length));
 			write(nsfd, data, length * sizeof(char));
 			free(data_sent);
+			memset(filename, 0, PATH_MAX + NAME_MAX + 1);
 	} while (number_sent != END);
 	close(nsfd);
 }
