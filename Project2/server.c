@@ -82,7 +82,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 					data = ERRORINTERNO;
 				} else {
 					sprintf(filename, "%s%s", directory, data_sent);
-					printf("%s\n", filename);
+					//printf("%s\n", filename);
 					int s = lstat(filename, &info);
 					if( s < 0) {
 						mutex_wait(semid, MUTEX);
@@ -186,15 +186,14 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						} else {
 							answer = SENDDIR;
 							struct dirent* direntry;
-							char* di;
+							data = "";
 							while((direntry = readdir(dir)) != NULL) {
 								if(strcmp(direntry->d_name, ".") != 0 &&
 								strcmp(direntry->d_name, "..") != 0) {
-									di = concat(data, direntry->d_name);
-									di = concat(data, "\n");
+									data = concat(data, direntry->d_name);
+									data = concat(data, "\n");
 								}
 							}
-							strncpy(data, di, strlen(di));
 							mutex_wait(semid, MUTEX);
 							data_log = concat(ip, " Comando: 102 Parametro: ");
 							data_log = concat(data_log, data_sent);
