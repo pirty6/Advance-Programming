@@ -1,4 +1,4 @@
-kill -9 $(ps | grep -i server | tr ' ' ',' | cut -f2 -d,)
+kill -9 $(ps | grep -i server | tr ' ' ',' | cut -f1 -d,)
 gcc -o server server.c
 gcc -o t test.c
 gcc -o c client.c
