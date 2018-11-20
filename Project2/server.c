@@ -108,25 +108,20 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 							answer = DIRECTORY;
 							data = RDIRECTORY;
 						} else {
-							printf("%s\n", filename);
+							//printf("%s\n", filename);
 							if(access(filename, R_OK) == 0) {
 								flag = 1;
 								FILE *fd;
 								fd = fopen(filename, "r");
 								size = info.st_size;
-								data = (char*) (malloc((size) * sizeof(char)));
 								answer = SENDFILE;
+								mutex_wait(semid, MUTEX);
 								write(nsfd, &answer, sizeof(answer));
 								write(nsfd, &size, sizeof(size));
 								char send_buffer[size];
-								while(!feof(fd)) {
-    							fread(send_buffer, 1, sizeof(send_buffer), fd);
-    							write(nsfd, send_buffer, sizeof(send_buffer));
-    							bzero(data, sizeof(send_buffer));
-									//free(data);
-								}
-								//fread(data, 1, size, fd);
-								mutex_wait(semid, MUTEX);
+								fread(send_buffer, 1, sizeof(send_buffer), fd);
+								write(nsfd, send_buffer, sizeof(send_buffer));
+								memset(send_buffer, 0, size);
 								data_log = concat(ip, " Comando: 101 Parametro: ");
 								data_log = concat(data_log, data_sent);
 								writeFile(log_filename, data_log);
@@ -191,13 +186,15 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						} else {
 							answer = SENDDIR;
 							struct dirent* direntry;
+							char* di;
 							while((direntry = readdir(dir)) != NULL) {
 								if(strcmp(direntry->d_name, ".") != 0 &&
 								strcmp(direntry->d_name, "..") != 0) {
-									// data = concat(data, direntry->d_name);
-									// data = concat(data, "\n");
+									di = concat(data, direntry->d_name);
+									di = concat(data, "\n");
 								}
 							}
+							strncpy(data, di, strlen(di));
 							mutex_wait(semid, MUTEX);
 							data_log = concat(ip, " Comando: 102 Parametro: ");
 							data_log = concat(data_log, data_sent);
@@ -236,12 +233,6 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 				write(nsfd, &length, sizeof(length));
 				write(nsfd, data, length * sizeof(char));
 			}
-			// } else {
-			// 	printf("Size: %li\n", size);
-			// 	write(nsfd, &size, sizeof(size));
-			// 	write(nsfd, data, size * sizeof(char));
-			// 	free(data);
-			// }
 			free(data_sent);
 			memset(filename, 0, PATH_MAX + NAME_MAX + 1);
 	} while (number_sent != END);
