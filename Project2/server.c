@@ -46,7 +46,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 	mutex_wait(semid, MUTEX);
 	writeFile(log_filename, data_log);
 	mutex_signal(semid, MUTEX);
-	char* data;
+	char* data = NULL;
 	char* data_sent;
 	char filename[PATH_MAX + NAME_MAX + 1];
 	int answer = HELLO, number_sent;
@@ -186,6 +186,8 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						} else {
 							answer = SENDDIR;
 							struct dirent* direntry;
+							flag = 1;
+							data = malloc(20*sizeof(char));
 							data = "";
 							while((direntry = readdir(dir)) != NULL) {
 								if(strcmp(direntry->d_name, ".") != 0 &&
@@ -194,6 +196,12 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 									data = concat(data, "\n");
 								}
 							}
+							data = concat(data, "\0");
+							length = strlen(data);
+							write(nsfd, &answer, sizeof(answer));
+							write(nsfd, &length, sizeof(length));
+							write(nsfd, data, length * sizeof(char));
+							free(data);
 							mutex_wait(semid, MUTEX);
 							data_log = concat(ip, " Comando: 102 Parametro: ");
 							data_log = concat(data_log, data_sent);
@@ -209,6 +217,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 				}
 			} else {
 				if(number_sent == END){
+					printf("%s Ha terminado la conexion\n", ip);
 					mutex_wait(semid, MUTEX);
 					data_log = concat(ip, " Ha terminado la conexion");
 					writeFile(log_filename, data_log);
