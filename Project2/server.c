@@ -46,26 +46,26 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 	mutex_wait(semid, MUTEX);
 	writeFile(log_filename, data_log);
 	mutex_signal(semid, MUTEX);
-	char* data = "Hola";
+	char* data = NULL;
 	char* data_sent;
 	char filename[PATH_MAX + NAME_MAX + 1];
 	int answer = HELLO, number_sent;
-	long length = strlen(data), length_sent, data_read;
+	long length = strlen(HOLA), length_sent, data_read;
 	write(nsfd, &answer, sizeof(answer));
 	write(nsfd, &length, sizeof(length));
-	write(nsfd, data, length * sizeof(char));
+	write(nsfd, HOLA, length * sizeof(char));
+	int flag;
+	long size;
 	srand(getpid());
 	do {
-			data = "";
+			flag = 0;
+			size = 0;
 			data_log = "";
 			read(nsfd, &number_sent, sizeof(number_sent));
-			// printf("EL SERVIDOR ESTA RECIBIENDO: %i\n", number_sent);
 			read(nsfd, &length_sent, sizeof(length_sent));
-			// printf("EL SERVIDOR ESTA RECIBIENDO LONGITUD: %li\n", length_sent);
 			data_sent = (char*) malloc(length_sent*sizeof(char));
 			data_read = read(nsfd, data_sent, length_sent * sizeof(char));
 			data_sent[length_sent] = '\0';
-			// printf("EL SERVIDOR ESTA RECIBIENDO DATOS: %s\n", data_sent);
 			struct stat info;
 
 			if(number_sent == SEND) {
@@ -79,10 +79,10 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 					writeFile(log_filename, data_log);
 					mutex_signal(semid, MUTEX);
 					answer = ERROR;
-					data = "Error interno";
+					data = ERRORINTERNO;
 				} else {
 					sprintf(filename, "%s%s", directory, data_sent);
-					printf("%s\n", filename);
+					//printf("%s\n", filename);
 					int s = lstat(filename, &info);
 					if( s < 0) {
 						mutex_wait(semid, MUTEX);
@@ -94,7 +94,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						writeFile(log_filename, data_log);
 						mutex_signal(semid, MUTEX);
 						answer = NOTFOUND;
-						data = "Archivo no encontrado";
+						data = SNOTFOUND;
 					} else {
 						if(S_ISDIR(info.st_mode)) {
 							mutex_wait(semid, MUTEX);
@@ -106,20 +106,22 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 							writeFile(log_filename, data_log);
 							mutex_signal(semid, MUTEX);
 							answer = DIRECTORY;
-							data = "La ruta es un directorio";
+							data = RDIRECTORY;
 						} else {
-							printf("%s\n", filename);
+							//printf("%s\n", filename);
 							if(access(filename, R_OK) == 0) {
-								char buffer;
-								char* target_filename = data_sent + 1;
-								int fd_in, fd_out;
-								fd_in = open(filename, O_RDONLY);
-								fd_out = open(target_filename, O_WRONLY | O_TRUNC | O_CREAT, 0666);
-								ssize_t nbytes;
-								while((nbytes = read(fd_in, &buffer, sizeof(buffer))) != 0) {
-									write(fd_out, &buffer, nbytes);
-								}
+								flag = 1;
+								FILE *fd;
+								fd = fopen(filename, "r");
+								size = info.st_size;
+								answer = SENDFILE;
 								mutex_wait(semid, MUTEX);
+								write(nsfd, &answer, sizeof(answer));
+								write(nsfd, &size, sizeof(size));
+								char send_buffer[size];
+								fread(send_buffer, 1, sizeof(send_buffer), fd);
+								write(nsfd, send_buffer, sizeof(send_buffer));
+								memset(send_buffer, 0, size);
 								data_log = concat(ip, " Comando: 101 Parametro: ");
 								data_log = concat(data_log, data_sent);
 								writeFile(log_filename, data_log);
@@ -127,10 +129,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 								data_log = concat(ip, " Respuesta: 301 Parametro: Enviando archivo");
 								writeFile(log_filename, data_log);
 								mutex_signal(semid, MUTEX);
-								answer = SENDFILE;
-								data = "Enviando archivo";
-								close(fd_in);
-								close(fd_out);
+								fclose(fd);
 							} else {
 								mutex_wait(semid, MUTEX);
 								data_log = concat(ip, " Comando: 101 Parametro: ");
@@ -141,7 +140,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 								writeFile(log_filename, data_log);
 								mutex_signal(semid, MUTEX);
 								answer = DENIED;
-								data = "Permiso denegado";
+								data = PDENIED;
 							}
 						}
 					}
@@ -157,7 +156,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 					writeFile(log_filename, data_log);
 					mutex_signal(semid, MUTEX);
 					answer = ERROR;
-					data = "Error interno";
+					data = ERRORINTERNO;
 				} else {
 					sprintf(filename, "%s%s", directory, data_sent);
 					if(lstat(filename, &info) != 0) {
@@ -170,7 +169,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 						writeFile(log_filename, data_log);
 						mutex_signal(semid, MUTEX);
 						answer = DIRNOTFOUND;
-						data = "Directorio no encontrado";
+						data = DNOTFOUND;
 					} else {
 						DIR* dir;
 						if((dir = opendir(filename)) == NULL) {
@@ -183,10 +182,13 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 							writeFile(log_filename, data_log);
 							mutex_signal(semid, MUTEX);
 							answer = NOTDIR;
-							data = "La ruta no es un directorio";
+							data = RNOTDIRECTORY;
 						} else {
 							answer = SENDDIR;
 							struct dirent* direntry;
+							flag = 1;
+							data = malloc(20*sizeof(char));
+							data = "";
 							while((direntry = readdir(dir)) != NULL) {
 								if(strcmp(direntry->d_name, ".") != 0 &&
 								strcmp(direntry->d_name, "..") != 0) {
@@ -194,6 +196,12 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 									data = concat(data, "\n");
 								}
 							}
+							data = concat(data, "\0");
+							length = strlen(data);
+							write(nsfd, &answer, sizeof(answer));
+							write(nsfd, &length, sizeof(length));
+							write(nsfd, data, length * sizeof(char));
+							free(data);
 							mutex_wait(semid, MUTEX);
 							data_log = concat(ip, " Comando: 102 Parametro: ");
 							data_log = concat(data_log, data_sent);
@@ -209,6 +217,7 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 				}
 			} else {
 				if(number_sent == END){
+					printf("%s Ha terminado la conexion\n", ip);
 					mutex_wait(semid, MUTEX);
 					data_log = concat(ip, " Ha terminado la conexion");
 					writeFile(log_filename, data_log);
@@ -223,13 +232,15 @@ void serves_client(int nsfd, char* directory, char* ip, char* program) {
 					writeFile(log_filename, data_log);
 					mutex_signal(semid, MUTEX);
 					answer = UNKNOWN;
-					data = "Comando no conocido";
+					data = UNKNOWNCOMMAND;
 				}
 			}
 			length = strlen(data);
-			write(nsfd, &answer, sizeof(answer));
-			write(nsfd, &length, sizeof(length));
-			write(nsfd, data, length * sizeof(char));
+			if(flag == 0) {
+				write(nsfd, &answer, sizeof(answer));
+				write(nsfd, &length, sizeof(length));
+				write(nsfd, data, length * sizeof(char));
+			}
 			free(data_sent);
 			memset(filename, 0, PATH_MAX + NAME_MAX + 1);
 	} while (number_sent != END);

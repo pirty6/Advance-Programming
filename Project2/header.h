@@ -47,6 +47,15 @@
 
 #define MUTEX       0
 
+#define HOLA "hola"
+#define SNOTFOUND "Archivo no encontrado"
+#define ERRORINTERNO "Error interno"
+#define RDIRECTORY "La ruta es un directorio"
+#define PDENIED "Permiso denegado"
+#define DNOTFOUND "Directorio no encontrado"
+#define RNOTDIRECTORY "La ruta no es un directorio"
+#define UNKNOWNCOMMAND "Comando no conocido"
+
 int mutex_wait(int semid, int sem_num) {
 	struct sembuf op;
 

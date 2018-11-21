@@ -258,6 +258,7 @@ void all_test(char* ip, int port, char* program) {
 
 	test_dont_command(sfd);
 	test_file(sfd);
+	test_dir(sfd);
 
 	snd_msg(sfd, 103, "Adios");
 	close(sfd);
